@@ -1,0 +1,55 @@
+# Java build output
+/target/
+**/target/
+**/bin/
+**/out/
+
+# IDE files (ignore from all subfolders)
+**/.classpath
+**/.project
+**/.settings/
+**/.idea/
+**/*.iml
+*.swp
+
+# Eclipse workspace files (ignore from all subfolders)
+**/.metadata/
+**/*.launch
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files
+.env
+*.env
+
+
+# Maven/Gradle
+/.mvn/
+**/build/
+/.gradle/
+/*.jar
+/*.war
+/*.ear
+
+# VS Code
+.vscode/
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# Test reports
+/test-output/
+/surefire-reports/
+/jacoco.exec
+
+# Others
+node_modules/
+npm-debug.log*
+yarn-debug.log*

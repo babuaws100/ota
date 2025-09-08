@@ -1,0 +1,34 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  debug:
+    verbosity: detailed
+  elasticsearch:
+    endpoints: ["http://opensearch:9200"]
+    logs_index: "otel-logs"
+    traces_index: "otel-traces"
+    metrics_index: "otel-metrics"
+
+processors:
+  batch:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [elasticsearch]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [elasticsearch]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [elasticsearch]

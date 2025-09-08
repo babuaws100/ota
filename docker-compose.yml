@@ -1,0 +1,84 @@
+version: "3.8"
+
+networks:
+  telemetry-net:
+    driver: bridge
+
+services:
+  user-service:
+    image: eclipse-temurin:21-jdk
+    container_name: user-service
+    working_dir: /app
+    volumes:
+      - ./user-service/target/user-service-0.0.1-SNAPSHOT.jar:/app/user-service.jar
+      - ./user-service/target/opentelemetry-javaagent.jar:/app/opentelemetry-javaagent.jar
+    command: >
+      java -javaagent:/app/opentelemetry-javaagent.jar
+           -Dotel.service.name=user-service
+           -Dotel.exporter.otlp.endpoint=http://otel-collector:4317
+           -jar /app/user-service.jar
+    ports:
+      - "8081:8080"
+    depends_on:
+      - otel-collector
+      - address-service
+    environment:
+      - ADDRESS_SERVICE=http://address-service:8080
+    networks:
+      - telemetry-net
+
+  address-service:
+    image: eclipse-temurin:21-jdk
+    container_name: address-service
+    working_dir: /app
+    volumes:
+      - ./address-service/target/address-service-0.0.1-SNAPSHOT.jar:/app/address-service.jar
+      - ./address-service/target/opentelemetry-javaagent.jar:/app/opentelemetry-javaagent.jar
+    command: >
+      java -javaagent:/app/opentelemetry-javaagent.jar
+           -Dotel.service.name=address-service
+           -Dotel.exporter.otlp.endpoint=http://otel-collector:4317
+           -jar /app/address-service.jar
+    ports:
+      - "8082:8080"
+    depends_on:
+      - otel-collector
+    networks:
+      - telemetry-net
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yaml
+    networks:
+      - telemetry-net
+
+  opensearch:
+    image: opensearchproject/opensearch:2.12.0
+    container_name: opensearch
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - telemetry-net
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.12.0
+    container_name: opensearch-dashboards
+    environment:
+      - OPENSEARCH_HOSTS=http://opensearch:9200
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    ports:
+      - "5601:5601"
+    depends_on:
+      - opensearch
+    networks:
+      - telemetry-net
