@@ -15,7 +15,7 @@ services:
     command: >
       java -javaagent:/app/opentelemetry-javaagent.jar
            -Dotel.service.name=user-service
-           -Dotel.exporter.otlp.endpoint=http://otel-collector:4317
+           -Dotel.exporter.otlp.endpoint=http://otel-collector:4318
            -jar /app/user-service.jar
     ports:
       - "8081:8080"
@@ -37,7 +37,7 @@ services:
     command: >
       java -javaagent:/app/opentelemetry-javaagent.jar
            -Dotel.service.name=address-service
-           -Dotel.exporter.otlp.endpoint=http://otel-collector:4317
+           -Dotel.exporter.otlp.endpoint=http://otel-collector:4318
            -jar /app/address-service.jar
     ports:
       - "8082:8080"
@@ -61,6 +61,7 @@ services:
     environment:
       - discovery.type=single-node
       - plugins.security.disabled=true
+      - DISABLE_INSTALL_DEMO_CONFIG=true
       - bootstrap.memory_lock=true
       - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
@@ -78,6 +79,18 @@ services:
       - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
     ports:
       - "5601:5601"
+    depends_on:
+      - opensearch
+    networks:
+      - telemetry-net
+
+  data-prepper:
+    image: opensearchproject/data-prepper:2.7.0
+    container_name: data-prepper
+    volumes:
+      - ./data-prepper-config.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml
+    ports:
+      - "21890:21890" # OTLP gRPC
     depends_on:
       - opensearch
     networks:

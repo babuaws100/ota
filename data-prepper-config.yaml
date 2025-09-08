@@ -1,0 +1,29 @@
+traces-pipeline:
+  source:
+    otel_trace_source:
+      ssl: false
+      port: 21890
+  sink:
+    - opensearch:
+        hosts: [ "http://opensearch:9200" ]
+        index: otel-v1-apm-span
+
+metrics-pipeline:
+  source:
+    otel_metrics_source:
+      ssl: false
+      port: 21891
+  sink:
+    - opensearch:
+        hosts: [ "http://opensearch:9200" ]
+        index: otel-v1-metrics
+
+logs-pipeline:
+  source:
+    otel_logs_source:
+      ssl: false
+      port: 21892
+  sink:
+    - opensearch:
+        hosts: [ "http://opensearch:9200" ]
+        index: otel-v1-logs
