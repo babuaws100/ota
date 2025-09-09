@@ -69,6 +69,7 @@ services:
       java -javaagent:/app/opentelemetry-javaagent.jar
            -Dotel.service.name=user-service
            -Dotel.exporter.otlp.endpoint=http://otel-collector:4318
+           -Dotel.instrumentation.methods.include=com.test.user.*
            -jar /app/user-service.jar
     ports:
       - "8081:8080"
@@ -91,6 +92,7 @@ services:
       java -javaagent:/app/opentelemetry-javaagent.jar
            -Dotel.service.name=address-service
            -Dotel.exporter.otlp.endpoint=http://otel-collector:4318
+           -Dotel.instrumentation.methods.include=com.test.address.*
            -jar /app/address-service.jar
     ports:
       - "8082:8080"
