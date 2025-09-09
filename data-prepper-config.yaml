@@ -3,10 +3,57 @@ traces-pipeline:
     otel_trace_source:
       ssl: false
       port: 21890
+  buffer:
+    bounded_blocking:
+      buffer_size: 25600
+      batch_size: 400
+  sink:
+    - pipeline:
+        name: "raw-traces-pipeline"
+    - pipeline:
+        name: "otel-service-map-pipeline"
+  # sink:
+  #   - opensearch:
+  #       hosts: [ "http://opensearch:9200" ]
+  #       index: otel-v1-apm-span
+
+
+raw-traces-pipeline:
+  workers: 5
+  delay: 3000
+  source:
+    pipeline:
+      name: "traces-pipeline"
+  buffer:
+    bounded_blocking:
+      buffer_size: 25600 
+      batch_size: 400 
+  processor:
+    - otel_trace_raw:
+    - otel_trace_group:
+        hosts: [ "http://opensearch:9200" ]
   sink:
     - opensearch:
-        hosts: [ "http://opensearch:9200" ]
-        index: otel-v1-apm-span
+        hosts: ["http://opensearch:9200"]
+        index_type: trace-analytics-raw  
+otel-service-map-pipeline:
+  workers: 5
+  delay: 3000
+  source:
+    pipeline:
+      name: "traces-pipeline"
+  processor:
+    - service_map_stateful:
+        window_duration: 180 
+  buffer:
+      bounded_blocking:
+        buffer_size: 25600
+        batch_size: 400
+  sink:
+    - opensearch:
+        hosts: ["http://opensearch:9200"]
+        index_type: trace-analytics-service-map
+        bulk_size: 4   
 
 metrics-pipeline:
   source:

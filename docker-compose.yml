@@ -5,55 +5,6 @@ networks:
     driver: bridge
 
 services:
-  user-service:
-    image: eclipse-temurin:21-jdk
-    container_name: user-service
-    working_dir: /app
-    volumes:
-      - ./user-service/target/user-service-0.0.1-SNAPSHOT.jar:/app/user-service.jar
-      - ./user-service/target/opentelemetry-javaagent.jar:/app/opentelemetry-javaagent.jar
-    command: >
-      java -javaagent:/app/opentelemetry-javaagent.jar
-           -Dotel.service.name=user-service
-           -Dotel.exporter.otlp.endpoint=http://otel-collector:4318
-           -jar /app/user-service.jar
-    ports:
-      - "8081:8080"
-    depends_on:
-      - otel-collector
-      - address-service
-    environment:
-      - ADDRESS_SERVICE=http://address-service:8080
-    networks:
-      - telemetry-net
-
-  address-service:
-    image: eclipse-temurin:21-jdk
-    container_name: address-service
-    working_dir: /app
-    volumes:
-      - ./address-service/target/address-service-0.0.1-SNAPSHOT.jar:/app/address-service.jar
-      - ./address-service/target/opentelemetry-javaagent.jar:/app/opentelemetry-javaagent.jar
-    command: >
-      java -javaagent:/app/opentelemetry-javaagent.jar
-           -Dotel.service.name=address-service
-           -Dotel.exporter.otlp.endpoint=http://otel-collector:4318
-           -jar /app/address-service.jar
-    ports:
-      - "8082:8080"
-    depends_on:
-      - otel-collector
-    networks:
-      - telemetry-net
-
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
-    container_name: otel-collector
-    command: ["--config=/etc/otel-collector-config.yaml"]
-    volumes:
-      - ./otel-collector-config.yml:/etc/otel-collector-config.yaml
-    networks:
-      - telemetry-net
 
   opensearch:
     image: opensearchproject/opensearch:2.12.0
@@ -93,5 +44,57 @@ services:
       - "21890:21890" # OTLP gRPC
     depends_on:
       - opensearch
+    networks:
+      - telemetry-net
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yaml
+    depends_on:
+      - data-prepper
+    networks:
+      - telemetry-net
+
+  user-service:
+    image: eclipse-temurin:21-jdk
+    container_name: user-service
+    working_dir: /app
+    volumes:
+      - ./user-service/target/user-service-0.0.1-SNAPSHOT.jar:/app/user-service.jar
+      - ./user-service/target/opentelemetry-javaagent.jar:/app/opentelemetry-javaagent.jar
+    command: >
+      java -javaagent:/app/opentelemetry-javaagent.jar
+           -Dotel.service.name=user-service
+           -Dotel.exporter.otlp.endpoint=http://otel-collector:4318
+           -jar /app/user-service.jar
+    ports:
+      - "8081:8080"
+    depends_on:
+      - otel-collector
+      - address-service
+    environment:
+      - ADDRESS_SERVICE=http://address-service:8080
+    networks:
+      - telemetry-net
+
+  address-service:
+    image: eclipse-temurin:21-jdk
+    container_name: address-service
+    working_dir: /app
+    volumes:
+      - ./address-service/target/address-service-0.0.1-SNAPSHOT.jar:/app/address-service.jar
+      - ./address-service/target/opentelemetry-javaagent.jar:/app/opentelemetry-javaagent.jar
+    command: >
+      java -javaagent:/app/opentelemetry-javaagent.jar
+           -Dotel.service.name=address-service
+           -Dotel.exporter.otlp.endpoint=http://otel-collector:4318
+           -jar /app/address-service.jar
+    ports:
+      - "8082:8080"
+    depends_on:
+      - otel-collector
     networks:
       - telemetry-net
