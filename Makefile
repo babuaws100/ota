@@ -5,6 +5,7 @@ all: build-services up
 build-services:
 	cd user-service && mvn clean install
 	cd address-service && mvn clean install
+	cd otel-javaagent-spring-extension && mvn clean install
 	docker-compose restart user-service address-service
 	
 
